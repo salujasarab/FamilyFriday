@@ -5,10 +5,10 @@ import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 
 public class FridaySeed {
-	 public long getSeed() {
+	public long getSeed() {
 		return nextFri();
 	}
-	
+
 	private long nextFri() {
 		LocalDate d = LocalDate.now();
 		if(d.getDayOfWeek() == DayOfWeek.FRIDAY) {
