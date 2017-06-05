@@ -1,0 +1,22 @@
+
+The project consists of main and test packages.
+
+1) Main Package
+
+The main package consists of the following files:
+
+1) FamilyFriday.java - Main file which parses the command line args like add, generate and help and takes respective actions.
+
+2) Generator.java - Generates groups and assigns members to groups.
+
+3) Group.java - Represents a group of members.
+
+4) FridaySeed.java - Generates a seed to feed to the random. This makes sure that if anyone runs the cli gets the same output.
+
+Highlights:
+> The cli could be run by any one and any number of times for the given friday. 
+> The result would be consistent. This is handled by generating a unique seed for that particular friday.
+
+2) Test Package
+
+The test package contains TestLunch.java class. The test validates that all the members were assigned to group or not.

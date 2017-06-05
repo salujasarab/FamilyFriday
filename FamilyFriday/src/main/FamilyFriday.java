@@ -113,9 +113,7 @@ public class FamilyFriday {
 
 		// Appending member to the file
 		try {
-
 			Files.write(Paths.get(fileName), memberName.getBytes(), StandardOpenOption.APPEND);
-
 		} catch (IOException e) {
 			e.printStackTrace();
 		} finally {
