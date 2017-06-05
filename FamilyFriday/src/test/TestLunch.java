@@ -6,8 +6,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import lunch.Generator;
-import lunch.Group;
+import main.Generator;
+import main.Group;
 
 public class TestLunch {
 
