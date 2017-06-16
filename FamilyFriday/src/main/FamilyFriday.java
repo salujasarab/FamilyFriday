@@ -15,7 +15,10 @@ import java.io.IOException;
 import java.io.Writer;
 import java.nio.file.*;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 public class FamilyFriday {
 
@@ -39,7 +42,18 @@ public class FamilyFriday {
 			if(cmd.hasOption("add")) {
 				System.out.println("Adding Member");
 				String memberName = cmd.getOptionValue("add");
-				addMembers(memberName);
+
+				if(memberName.contains(",")) {
+					String[] multipleMem = memberName.split(",");
+
+					for(String member: multipleMem) {
+						addMembers(member, 1);
+					}
+
+				}
+				else {
+					addMembers(memberName, 1);
+				}
 
 			}
 
@@ -51,6 +65,11 @@ public class FamilyFriday {
 				List<Group> groups = generator.generate(memberList);
 
 				printGroups(groups);
+			}
+			else if(cmd.hasOption("updateState")) {
+				System.out.println("Updating member state");
+				String memberName = cmd.getOptionValue("updateState");
+				updateMemberState(memberName, fileName);
 			}
 			else if(cmd.hasOption("help")) {
 				System.out.println("Use '-add' option to add members and '-generate' to generate lunch buddies");
@@ -96,7 +115,7 @@ public class FamilyFriday {
 	 * 
 	 * This method adds the specified member to the lunch group list
 	 */
-	public void addMembers(String memberName) {
+	public void addMembers(String memberName, int availability) {
 
 		File f = new File(fileName); 
 		Writer fileWriter = null;
@@ -111,6 +130,8 @@ public class FamilyFriday {
 			}
 		}
 
+		memberName = availability + "#" + memberName;
+		memberName += "\n";
 		// Appending member to the file
 		try {
 			Files.write(Paths.get(fileName), memberName.getBytes(), StandardOpenOption.APPEND);
@@ -134,7 +155,9 @@ public class FamilyFriday {
 	 * @param fileName
 	 * @return list of members read from the specified file
 	 * 
-	 * This methods reads member names from the specified file and return it as a list of string
+	 * This methods reads member names from the specified file and return it as a list of string.
+	 * It will skip the members that are not present/available
+	 * 
 	 */
 	public List<String> getMembersFromFile(String fileName) {
 
@@ -145,7 +168,13 @@ public class FamilyFriday {
 			String line;
 			while ((line = br.readLine()) != null) {
 
-				memberList.add(line);
+				int availability = Integer.parseInt(line.split("#")[0]);
+				String name = line.split("#")[1];
+
+				if(availability == 1)
+					memberList.add(name);
+				else
+					System.out.println("Skipping member : " + name + " , due to unavailability ");
 			}
 
 			br.close();
@@ -155,8 +184,63 @@ public class FamilyFriday {
 		} catch (IOException e) {
 
 			e.printStackTrace();
+		} catch(NumberFormatException e){
+			e.printStackTrace();
 		}
 		return memberList;
+	}
+
+	public boolean isNumeric(String s) {  
+		return s != null && s.matches("[-+]?\\d*\\.?\\d+");  
+	} 
+
+	public void updateMemberState(String memberName, String fileName) {
+		BufferedReader br = null;
+
+		Map<String, Integer> map = new HashMap<>();
+
+		try {
+			br = new BufferedReader(new FileReader(fileName)) ;
+			String line;
+			while ((line = br.readLine()) != null) {
+				String memNameFile = line.split("#")[1];
+				int availability = Integer.parseInt(line.split("#")[0]);
+
+				if(memNameFile.equals(memberName)) {
+					map.put(memNameFile, 0);
+				}else {
+					map.put(memNameFile, availability);
+				}
+			}
+			br.close();
+		} catch (FileNotFoundException e) {
+
+			e.printStackTrace();
+		} catch (IOException e) {
+
+			e.printStackTrace();
+		}
+
+		// Delete the file if it exists
+		File f = new File(fileName); 
+
+		// Check if the file exists, if yes delete it
+		if(f.exists()) {
+			f.delete();
+		}
+
+		Iterator<Map.Entry<String, Integer>> it = map.entrySet().iterator();
+		while (it.hasNext()) {
+			Map.Entry<String, Integer> pair = (Map.Entry<String, Integer>)it.next();
+			//System.out.println(pair.getKey() + " = " + pair.getValue());
+
+			int val = (int)pair.getValue();
+			String key = (String) pair.getKey();
+			System.out.println("Member Name: " + key + " , Availability: " + val);
+			addMembers(key, val);
+
+			it.remove();
+		}
 	}
 
 	public static void main(String[] args)  {
@@ -167,6 +251,8 @@ public class FamilyFriday {
 		// Adding options to the command line cli
 		options.addOption("add", true, "add member");
 		options.addOption("help", false, "Help");
+		options.addOption("updateState", true, "Update Member Availability");
+
 		options.addOption("generate", false, "Lunch Buddies list");
 
 		FamilyFriday ff = new FamilyFriday();
