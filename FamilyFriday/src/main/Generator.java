@@ -71,5 +71,30 @@ public class Generator {
 		}
 		return groupList;
 	}
+	
+	public List<Integer> getGroupSizes(List<String> list) {
+
+		shuffle(list);
+
+		List<Integer> groupList = new ArrayList<>();
+
+		int i = 0;
+
+		while(i < list.size()) {
+			int memleft = list.size() - i;
+			int grpSize = memleft;
+
+			if(memleft > 10) {
+				grpSize = getRandomNumber();
+
+			} else if(memleft > 5 && memleft <= 10) {
+				grpSize = memleft/2;
+			} 
+
+			groupList.add(grpSize);
+			i = i+grpSize;
+		}
+		return groupList;
+	}
 
 }

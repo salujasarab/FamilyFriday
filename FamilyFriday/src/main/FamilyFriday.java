@@ -16,6 +16,7 @@ import java.io.Writer;
 import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -66,6 +67,9 @@ public class FamilyFriday {
 
 				printGroups(groups);
 			}
+			else if(cmd.hasOption("genShuffled")) {
+				genShuffled();
+			}
 			else if(cmd.hasOption("updateState")) {
 				System.out.println("Updating member state");
 				String memberName = cmd.getOptionValue("updateState");
@@ -80,6 +84,100 @@ public class FamilyFriday {
 		}catch(ParseException e) {
 			System.out.println("Parse Exception");
 		}
+	}
+
+	public void genShuffled() {
+
+		// Get group sizes
+		List<String> memberList = getMembersFromFile(fileName);
+		Generator generator = new Generator();
+		List<Integer> groups = generator.getGroupSizes(memberList);
+
+		//load members
+		HashMap<String, HashSet<String>> map = getTeamsFromFile(fileName);
+
+		List<List<String>> memNameList = new ArrayList<>();
+
+		Iterator<Map.Entry<String, HashSet<String>>> it = map.entrySet().iterator();
+
+		// Converting to list
+		while (it.hasNext()) {
+
+			List<String> tempMemList = new ArrayList<>();
+
+			Map.Entry<String, HashSet<String>> pair = (Map.Entry<String, HashSet<String>>)it.next();
+			HashSet<String> setValues = pair.getValue();
+
+			for(String s: setValues) {
+				tempMemList.add(s);
+			}
+
+			memNameList.add(tempMemList);
+			it.remove();
+		}
+
+		int index = 0;
+		List<Group> groupList = new ArrayList<Group>();
+
+		// Generation of groups
+		for(int groupSize: groups) {
+			Group group = new Group();
+			while(index < groupSize) {
+				List<String> list = memNameList.get(index);
+				if(list.size() == 0) {
+					memNameList.remove(index);
+					continue;
+				}
+
+				String memName = list.get(list.size()-1);
+				list.remove(list.size()-1);
+				group.addMember(memName);
+				index++;
+			}
+			groupList.add(group);
+			index = 0;
+		}
+
+		printGroups(groupList);
+	}
+
+	public HashMap<String, HashSet<String>> getTeamsFromFile(String fileName) {
+
+		BufferedReader br = null;
+		List<String> memberList = new ArrayList<String>();
+		HashMap<String, HashSet<String>> map = new HashMap<String, HashSet<String>>();
+
+		try {
+			br = new BufferedReader(new FileReader(fileName)) ;
+			String line;
+			while ((line = br.readLine()) != null) {
+
+				int availability = Integer.parseInt(line.split("#")[0]);
+				String name = line.split("#")[1];
+				String team = line.split("#")[2];
+
+				if(availability == 1) {
+					if(!map.containsKey(team))
+						map.put(team, new HashSet<String>());
+
+					map.get(team).add(name);
+				}
+				else
+					System.out.println("Skipping member : " + name + " , due to unavailability ");
+			}
+
+			br.close();
+		} catch (FileNotFoundException e) {
+
+			e.printStackTrace();
+		} catch (IOException e) {
+
+			e.printStackTrace();
+		} catch(NumberFormatException e){
+			e.printStackTrace();
+		}
+
+		return map;
 	}
 
 	/**
@@ -190,6 +288,8 @@ public class FamilyFriday {
 		return memberList;
 	}
 
+
+
 	public boolean isNumeric(String s) {  
 		return s != null && s.matches("[-+]?\\d*\\.?\\d+");  
 	} 
@@ -252,6 +352,7 @@ public class FamilyFriday {
 		options.addOption("add", true, "add member");
 		options.addOption("help", false, "Help");
 		options.addOption("updateState", true, "Update Member Availability");
+		options.addOption("genShuffled", false, "Generate");
 
 		options.addOption("generate", false, "Lunch Buddies list");
 
